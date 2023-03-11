@@ -1745,8 +1745,11 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 var windowWidth = 1280;
 var windowHeight = 720;
 if (typeof window !== "undefined") {
-  windowWidth = Math.min(window.innerWidth, document.documentElement.clientWidth);
-  windowHeight = Math.min(window.innerHeight, document.documentElement.clientHeight);
+  //windowWidth = Math.min(window.innerWidth, document.documentElement.clientWidth);
+  //windowHeight = Math.min(window.innerHeight, document.documentElement.clientHeight);
+
+  windowWidth = window.innerWidth;
+  windowHeight = window.innerHeight;
   window.addEventListener('load', function () {
     window.focus();
     document.body.addEventListener('click', function (e) {
