@@ -1748,8 +1748,8 @@ if (typeof window !== "undefined") {
   //windowWidth = Math.min(window.innerWidth, document.documentElement.clientWidth);
   //windowHeight = Math.min(window.innerHeight, document.documentElement.clientHeight);
 
-  windowWidth = window.innerWidth;
-  windowHeight = window.innerHeight;
+  windowWidth = document.documentElement.clientWidth;
+  windowHeight = document.documentElement.clientHeight;
   window.addEventListener('load', function () {
     window.focus();
     document.body.addEventListener('click', function (e) {
