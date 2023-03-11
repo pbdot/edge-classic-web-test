@@ -1733,6 +1733,12 @@ var edge_classic = __webpack_require__("fZh3");
 var edge_classic_default = /*#__PURE__*/__webpack_require__.n(edge_classic);
 
 // CONCATENATED MODULE: ./routes/home/index.tsx
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -1744,6 +1750,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 var windowWidth = 1280;
 var windowHeight = 720;
+
+// https://www.raymondcamden.com/2018/10/05/storing-retrieving-photos-in-indexeddb
+
 if (typeof window !== "undefined") {
   //windowWidth = Math.min(window.innerWidth, document.documentElement.clientWidth);
   //windowHeight = Math.min(window.innerHeight, document.documentElement.clientHeight);
@@ -1757,11 +1766,110 @@ if (typeof window !== "undefined") {
     }, false);
   });
 }
-var home_Edge = function Edge() {
-  var _useState = h(true),
+var EdgeState;
+(function (EdgeState) {
+  EdgeState[EdgeState["Choose"] = 0] = "Choose";
+  EdgeState[EdgeState["Loading"] = 1] = "Loading";
+  EdgeState[EdgeState["Playing"] = 2] = "Playing";
+})(EdgeState || (EdgeState = {}));
+;
+var home_Choose = function Choose(_ref) {
+  var callback = _ref.callback;
+  var database;
+  var dbrequest = window.indexedDB.open('/edge-classic');
+  dbrequest.onerror = function (e) {
+    console.error('Unable to open database.');
+  };
+  dbrequest.onupgradeneeded = function (e) {
+    // Save the IDBDatabase interface
+    var db = e.target.result;
+    if (!db.objectStoreNames.contains("FILE_DATA")) {
+      console.log("Creating FILE_DATA object store");
+      var store = db.createObjectStore("FILE_DATA", {});
+      store.createIndex("timestamp", "timestamp", {
+        unique: false
+      });
+    }
+  };
+  dbrequest.onsuccess = function (e) {
+    var db = e.target.result;
+    database = db;
+  };
+  return Object(external_preact_["h"])("div", null, Object(external_preact_["h"])("div", {
+    style: "padding:24px;text-align:center"
+  }, Object(external_preact_["h"])("button", {
+    style: "font-size:24px;padding:8px",
+    onClick: function onClick() {
+      callback("freedoom2.wad");
+    }
+  }, "Play Freedoom")), Object(external_preact_["h"])("div", {
+    style: "padding:24px;text-align:center"
+  }, Object(external_preact_["h"])("button", {
+    style: "font-size:24px;padding:8px",
+    onClick: function onClick() {
+      return document.getElementById('getWadFile').click();
+    }
+  }, "Choose Wad")), Object(external_preact_["h"])("input", {
+    id: "getWadFile",
+    style: "display:none",
+    type: "file",
+    onChange: function onChange(e) {
+      if (!database) {
+        console.error("No database on wad upload");
+        return;
+      }
+
+      //const file = e.target.files[0];
+      var files = e.target.files;
+      if (files.length !== 1) {
+        e.preventDefault();
+        alert("Please select a single wad file");
+        return;
+      }
+      var file = files[0];
+      if (!file.name.toLowerCase().endsWith(".wad")) {
+        e.preventDefault();
+        alert("Please select a single wad file");
+        return;
+      }
+      var reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = function (e) {
+        //alert(e.target.result);
+        var bits = e.target.result;
+        var contents = new Uint8Array(bits);
+        var trans = database.transaction(['FILE_DATA'], 'readwrite');
+        var path = "/edge-classic/".concat(file.name);
+        var addReq = trans.objectStore('FILE_DATA').put({
+          timestamp: new Date(),
+          mode: 33206,
+          contents: contents
+        }, path);
+        addReq.onerror = function (e) {
+          console.log('error storing data');
+          console.error(e);
+        };
+        trans.oncomplete = function (e) {
+          console.log('data stored');
+          callback(file.name);
+        };
+      };
+    }
+  }));
+};
+var home_Loading = function Loading() {
+  return Object(external_preact_["h"])("div", {
+    style: "font-size:24px;color:white;text-align:center;padding-top:48px;"
+  }, "Loading - Please Wait - TODO: fancy progress indicator");
+};
+var home_Playing = function Playing(_ref2) {
+  var wad = _ref2.wad;
+  var _useState = h({
+      loading: true
+    }),
     _useState2 = _slicedToArray(_useState, 2),
-    loading = _useState2[0],
-    setLoading = _useState2[1];
+    state = _useState2[0],
+    setState = _useState2[1];
   p(function () {
     var canvas = document.querySelector('#canvas');
     if (!canvas) {
@@ -1772,14 +1880,21 @@ var home_Edge = function Edge() {
       alert('FIXME: WebGL context lost, please reload the page');
       e.preventDefault();
     }, false);
+    var args = ["-home", "edge-classic", "-windowed", "-width", windowWidth.toString(), "-height", windowHeight.toString(), "-iwad", "freedoom2.wad"];
+    if (wad !== "freedoom2.wad") {
+      args.push("-file");
+      args.push("edge-classic/".concat(wad));
+    }
     edge_classic_default()({
       edgePostInit: function edgePostInit() {
         console.log("Post-Init!");
-        setLoading(false);
+        setState(_objectSpread(_objectSpread({}, state), {}, {
+          loading: false
+        }));
       },
       preEdgeSyncFS: function preEdgeSyncFS() {},
       postEdgeSyncFS: function postEdgeSyncFS() {},
-      arguments: ["-windowed", "-width", windowWidth.toString(), "-height", windowHeight.toString(), "-iwad", "freedoom2.wad", "-home", "/edge-classic"],
+      arguments: args,
       preInit: function preInit() {
         console.log("Pre-Init");
       },
@@ -1807,16 +1922,27 @@ var home_Edge = function Edge() {
     });
     return function () {};
   }, []);
-  return Object(external_preact_["h"])("div", null, loading && Object(external_preact_["h"])("div", {
-    style: "font-size:24px;color:white;text-align:center;padding-top:48px;"
-  }, "Loading - Please Wait - TODO: fancy progress indicator"), Object(external_preact_["h"])("canvas", {
-    style: loading ? "display:none;" : "display:block;",
+  return Object(external_preact_["h"])("div", null, state.loading && Object(external_preact_["h"])(home_Loading, null), Object(external_preact_["h"])("canvas", {
+    style: state.loading ? "display:none;" : "display:block;",
     id: "canvas",
     width: "".concat(windowWidth, "px"),
     height: "".concat(windowHeight, "px"),
     onContextMenu: function onContextMenu(event) {
       return event.preventDefault();
     }
+  }));
+};
+var home_Edge = function Edge() {
+  var _useState3 = h(""),
+    _useState4 = _slicedToArray(_useState3, 2),
+    wad = _useState4[0],
+    setWad = _useState4[1];
+  return Object(external_preact_["h"])("div", null, !wad && Object(external_preact_["h"])(home_Choose, {
+    callback: function callback(wad) {
+      setWad(wad);
+    }
+  }), !!wad && Object(external_preact_["h"])(home_Playing, {
+    wad: wad
   }));
 };
 var home_Home = function Home() {
