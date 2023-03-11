@@ -1,0 +1,1 @@
+{"version":3,"sources":["webpack:///./style/index.css"],"names":[],"mappings":"AAAA;CACC,mBAAmB;AACpB;;AAEA;CACC,SAAS;CACT,UAAU;CACV,iBAAiB;CACjB,gBAAgB;AACjB","file":"ssr-bundle.01272.css","sourcesContent":[":root {\n\tbackground: #1c1c1c;\n}\n\nbody {\n\tmargin: 0;\n\tpadding: 0;\n\tmin-height: 100vh;\n\tmin-width: 100vw;\n}\n"],"sourceRoot":""}
