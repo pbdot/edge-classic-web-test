@@ -1775,87 +1775,91 @@ var EdgeState;
 ;
 var home_Choose = function Choose(_ref) {
   var callback = _ref.callback;
-  var database;
-  var dbrequest = window.indexedDB.open('/edge-classic');
-  dbrequest.onerror = function (e) {
-    console.error('Unable to open database.');
-  };
-  dbrequest.onupgradeneeded = function (e) {
-    // Save the IDBDatabase interface
-    var db = e.target.result;
-    if (!db.objectStoreNames.contains("FILE_DATA")) {
-      console.log("Creating FILE_DATA object store");
-      var store = db.createObjectStore("FILE_DATA", {});
-      store.createIndex("timestamp", "timestamp", {
-        unique: false
-      });
-    }
-  };
-  dbrequest.onsuccess = function (e) {
-    var db = e.target.result;
-    database = db;
-  };
-  return Object(external_preact_["h"])("div", null, Object(external_preact_["h"])("div", {
-    style: "padding:24px;text-align:center"
-  }, Object(external_preact_["h"])("button", {
-    style: "font-size:24px;padding:8px",
-    onClick: function onClick() {
-      callback("freedoom2.wad");
-    }
-  }, "Play Freedoom")), Object(external_preact_["h"])("div", {
-    style: "padding:24px;text-align:center"
-  }, Object(external_preact_["h"])("button", {
-    style: "font-size:24px;padding:8px",
-    onClick: function onClick() {
-      return document.getElementById('getWadFile').click();
-    }
-  }, "Choose Wad")), Object(external_preact_["h"])("input", {
-    id: "getWadFile",
-    style: "display:none",
-    type: "file",
-    onChange: function onChange(e) {
-      if (!database) {
-        console.error("No database on wad upload");
-        return;
+  if (typeof window !== "undefined") {
+    var database;
+    var dbrequest = window.indexedDB.open('/edge-classic');
+    dbrequest.onerror = function (e) {
+      console.error('Unable to open database.');
+    };
+    dbrequest.onupgradeneeded = function (e) {
+      // Save the IDBDatabase interface
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains("FILE_DATA")) {
+        console.log("Creating FILE_DATA object store");
+        var store = db.createObjectStore("FILE_DATA", {});
+        store.createIndex("timestamp", "timestamp", {
+          unique: false
+        });
       }
+    };
+    dbrequest.onsuccess = function (e) {
+      var db = e.target.result;
+      database = db;
+    };
+    return Object(external_preact_["h"])("div", null, Object(external_preact_["h"])("div", {
+      style: "padding:24px;text-align:center"
+    }, Object(external_preact_["h"])("button", {
+      style: "font-size:24px;padding:8px",
+      onClick: function onClick() {
+        callback("freedoom2.wad");
+      }
+    }, "Play Freedoom")), Object(external_preact_["h"])("div", {
+      style: "padding:24px;text-align:center"
+    }, Object(external_preact_["h"])("button", {
+      style: "font-size:24px;padding:8px",
+      onClick: function onClick() {
+        return document.getElementById('getWadFile').click();
+      }
+    }, "Choose Wad")), Object(external_preact_["h"])("input", {
+      id: "getWadFile",
+      style: "display:none",
+      type: "file",
+      onChange: function onChange(e) {
+        if (!database) {
+          console.error("No database on wad upload");
+          return;
+        }
 
-      //const file = e.target.files[0];
-      var files = e.target.files;
-      if (files.length !== 1) {
-        e.preventDefault();
-        alert("Please select a single wad file");
-        return;
-      }
-      var file = files[0];
-      if (!file.name.toLowerCase().endsWith(".wad")) {
-        e.preventDefault();
-        alert("Please select a single wad file");
-        return;
-      }
-      var reader = new FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onload = function (e) {
-        //alert(e.target.result);
-        var bits = e.target.result;
-        var contents = new Uint8Array(bits);
-        var trans = database.transaction(['FILE_DATA'], 'readwrite');
-        var path = "/edge-classic/".concat(file.name);
-        var addReq = trans.objectStore('FILE_DATA').put({
-          timestamp: new Date(),
-          mode: 33206,
-          contents: contents
-        }, path);
-        addReq.onerror = function (e) {
-          console.log('error storing data');
-          console.error(e);
+        //const file = e.target.files[0];
+        var files = e.target.files;
+        if (files.length !== 1) {
+          e.preventDefault();
+          alert("Please select a single wad file");
+          return;
+        }
+        var file = files[0];
+        if (!file.name.toLowerCase().endsWith(".wad")) {
+          e.preventDefault();
+          alert("Please select a single wad file");
+          return;
+        }
+        var reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        reader.onload = function (e) {
+          //alert(e.target.result);
+          var bits = e.target.result;
+          var contents = new Uint8Array(bits);
+          var trans = database.transaction(['FILE_DATA'], 'readwrite');
+          var path = "/edge-classic/".concat(file.name);
+          var addReq = trans.objectStore('FILE_DATA').put({
+            timestamp: new Date(),
+            mode: 33206,
+            contents: contents
+          }, path);
+          addReq.onerror = function (e) {
+            console.log('error storing data');
+            console.error(e);
+          };
+          trans.oncomplete = function (e) {
+            console.log('data stored');
+            callback(file.name);
+          };
         };
-        trans.oncomplete = function (e) {
-          console.log('data stored');
-          callback(file.name);
-        };
-      };
-    }
-  }));
+      }
+    }));
+  } else {
+    return null;
+  }
 };
 var home_Loading = function Loading() {
   return Object(external_preact_["h"])("div", {
